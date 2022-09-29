@@ -110,7 +110,7 @@ int setup(char inputBuffer[], char *args[],int *background)
 				
 			case '\n':  /* should be the final char examined */
 				//fill in your code here, set up the last item args[x] == NULL;
-				args[++command_number] = NULL;
+				args[++command_number] = '\0';
 				break;
 				/* no more arguments to this command */	
 
@@ -165,27 +165,14 @@ int main(void)
 		* Call strncmp(str1,str1,count). The function call will return 0 if str1 == str2.
 		* "count" is the number of characters we use to compare.    
 		*/
-		printf("%s\n", args[0]);
-		printf("%s\n", args[1]);
-		printf("%s", args[2]);
+		//printf("%s\n", args[0]);
+		//printf("%s\n", args[1]);
+		//printf("%s", args[2]);
+
+		printf("background: %d\n", background);
 		if (!strncmp("exit", args[0], str_len))
 			shouldrun = 0;
-		/*
-		if ((child = fork()) == 0)
-		{
-			// Child process
-			execvp(args[0], args);
-			exit(0);
-		}
-		else if (child > 0)
-		{
-			// Parent process
-			if (background)
-				waitpid(child, &status, 0);
-		}
-		else
-			return -1;
-		*/
+	
 		// fill in your code here Part II
 		/* if the user typed in "history", the shell program will display the history commands. 
 		* you will use "printf" to print the display_history
@@ -201,6 +188,20 @@ int main(void)
 			*  pid == 0, it is the child process. use the system call execvp(args[0],args);
 			*  pid > 0, it is the parent. Here you need consider it is foreground or background
 			*/
+			if ((child = fork()) == 0)
+				{
+					// Child process
+					//execvp(args[0], args);
+					exit(0);
+				}
+				else if (child > 0)
+				{
+					// Parent process
+					if (background)
+						waitpid(child, &status, 0);
+				}
+				else
+					return -1;
 		}
 	}
 	
