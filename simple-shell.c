@@ -1,19 +1,26 @@
 /**
- *version control and author 
+ *version control and 
+ name: Kevin Dang
  */
 
 #include <stdio.h>
-#include <unistd.h>
+#ifdef __unix__
+    #include <unistd.h>
+#elif defined(_WIN32) || defined(WIN32)
+    #include <windows.h>
+    #include <io.h>
+	#define STDIN_FILENO 0
+#endif
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <string.h>
 
 
-#define MAX_LINE		80 /* 80 chars per line, per command, should be enough. */
-#define MAX_COMMANDS	9 /* size of history */
+#define MAX_LINE		80 	/* 80 chars per line, per command, should be enough. */
+#define MAX_COMMANDS	9 	/* size of history */
 
-char history[MAX_COMMANDS][MAX_LINE]; //the array used to store history commands.
+char history [MAX_COMMANDS][MAX_LINE]; 		//the array used to store history commands.
 char display_history [MAX_COMMANDS][MAX_LINE]; 
 /*the array used for "printf" to display history nicely. Remove special characters like "\n" or "\0"*/
 
@@ -24,12 +31,10 @@ int command_count = 0;
  */
 
 void addtohistory(char inputBuffer[]) {
-
-	
 	// update array"history": add the command to history, strcpy(str1,str2);
 	
 	// update array"display_history": remove characters like '\n', '\0' in order to display nicely
- 
+	
 
 	return;
 }
@@ -43,19 +48,21 @@ void addtohistory(char inputBuffer[]) {
 
 int setup(char inputBuffer[], char *args[],int *background)
 {
-    int length,		/* # of characters in the command line */
+    int length,			/* # of characters in the command line */
 	index,				/* loop index for accessing inputBuffer array */
-	command_number;	/* index of requested command number */
+	command_number;		/* index of requested command number */
 
 	//define your local varialbes here;
-	
+	int first_letter = 1;
+	command_number = 0;
 	
     /* read what the user enters on the command line */
 	do {
 		printf("osh>");
 		fflush(stdout);
-		length = read(STDIN_FILENO,inputBuffer,MAX_LINE); 
+		length = read(STDIN_FILENO, inputBuffer, MAX_LINE); 
 	}
+
 	while (inputBuffer[0] == '\n'); /* swallow newline characters */
 
 
@@ -72,9 +79,9 @@ int setup(char inputBuffer[], char *args[],int *background)
 	 */
 	
 	// fill in your code here Part II, if the user input is to repeat some history commands
-	/*if (inputBuffer[0] == '!') {
+	if (inputBuffer[0] == '!') {
 
-	}*/
+	}
 	
 	
 
@@ -86,30 +93,42 @@ int setup(char inputBuffer[], char *args[],int *background)
 	
 	/**
 	 * Parse the contents of inputBuffer
-	 */
-	
+	*/
     for (index = 0; index < length; ++index) { 
 		/* examine every character in the inputBuffer */
 		
-        switch (inputBuffer[i]){
+        switch (inputBuffer[index]){
 			case ' ':
-			case '\t' : /* argument separators */
-				//fill in your code here, set up args				
+			case '\t': /* argument separators */
+				//fill in your code here, set up args
+				inputBuffer[index] = '\0';
+				// args[command_number++] = '\0';
+				++command_number;
+				first_letter = 1;
+				break;
 
 				
 			case '\n':  /* should be the final char examined */
-				//fill in your code here, set up the last item args[x] ==NULL;
+				//fill in your code here, set up the last item args[x] == NULL;
+				args[++command_number] = NULL;
+				break;
 				/* no more arguments to this command */	
 
 				
-	    		default :             /* some other character */
-				 //fill in your code here, 
+			default :             /* some other character */
+				//fill in your code here,
+				if (inputBuffer[index] == '&' )
+					*background = 1;
+				else if (first_letter)
+				{
+					args[command_number] = &inputBuffer[index];
+					first_letter = 0;
+				}
 				/* args[i] is a pointer to a string, its value is the address of the first charater of that string
 				* You want to track the location of the beginning character of each string. 
-				* The location is the first character, which is not '\t', not '\t', and not '\n'
+				* The location is the first character, which is not ' ', not '\t', and not '\n'
 				* You also need check "&". If '&' is detected, setup background flag.
-				*/  
-				}
+				*/
 		} /* end of switch */
 	}    /* end of for */
 	
@@ -117,9 +136,6 @@ int setup(char inputBuffer[], char *args[],int *background)
 	 * Here you finish parsing the input. 
 	 * There is one more thing to assure. If we get '&', make sure you don't enter it in the args array
 	 */
-	
-
-
 	return 1;
 	
 } /* end of setup routine */
@@ -127,28 +143,49 @@ int setup(char inputBuffer[], char *args[],int *background)
 
 int main(void)
 {
-	char inputBuffer[MAX_LINE]; 	/* buffer to hold the command entered */
-	int background;             	/* equals 1 if a command is followed by '&' */
-	char *args[MAX_LINE/2 + 1];	/* command line (of 80) has max of 40 arguments */
-	pid_t child;            		/* process id of the child process */
+	char inputBuffer[MAX_LINE]; 		/* buffer to hold the command entered */
+	int background;             		/* equals 1 if a command is followed by '&' */
+	char *args[MAX_LINE/2 + 1];			/* command line (of 80) has max of 40 arguments */
+	pid_t child;            			/* process id of the child process */
 	
 	//define your local variables here, at the beginning of your program. 
-
+	int status;
 	int shouldrun = 1;
+	int str_len = 4;
 	
 
 		
     while (shouldrun){            		/* Program terminates normally inside setup */
 		background = 0;
 		
-		shouldrun = setup(inputBuffer,args,&background);       /* get next command */
+		shouldrun = setup(inputBuffer, args, &background);       /* get next command */
 		
 		// fill in your code here Part I
 		/* if the user typed in "exit", the shell program will return (or terminate). 
 		* Call strncmp(str1,str1,count). The function call will return 0 if str1 == str2.
 		* "count" is the number of characters we use to compare.    
-		*/		
-		
+		*/
+		printf("%s\n", args[0]);
+		printf("%s\n", args[1]);
+		printf("%s", args[2]);
+		if (!strncmp("exit", args[0], str_len))
+			shouldrun = 0;
+		/*
+		if ((child = fork()) == 0)
+		{
+			// Child process
+			execvp(args[0], args);
+			exit(0);
+		}
+		else if (child > 0)
+		{
+			// Parent process
+			if (background)
+				waitpid(child, &status, 0);
+		}
+		else
+			return -1;
+		*/
 		// fill in your code here Part II
 		/* if the user typed in "history", the shell program will display the history commands. 
 		* you will use "printf" to print the display_history
@@ -156,9 +193,7 @@ int main(void)
 		* Your program should go to read again, which means calling the "setup" function.  
 		*/
 		
-	
-
-				
+		
 		if (shouldrun) {
 			/* creates a duplicate process! */
 			//here fill in your code
@@ -166,10 +201,8 @@ int main(void)
 			*  pid == 0, it is the child process. use the system call execvp(args[0],args);
 			*  pid > 0, it is the parent. Here you need consider it is foreground or background
 			*/
-							;
-			}
 		}
-    }
+	}
 	
 	return 0;
 }
